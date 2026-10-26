@@ -1,6 +1,13 @@
-# Miiverse API Backend
+<h1 align="center">Miiverse API Backend</h1>
 
-A high-performance backend built in **Go** using **Gin**, **PostgreSQL** (`pgx`), and **MinIO** (S3-compatible object storage) for account management and Mii avatar profile synchronization (3DS / Wii U).
+<p align="center">
+  <b>A high-performance backend built in **Go** using **Gin**, **PostgreSQL** (`pgx`), and **MinIO** (S3-compatible object storage) for account management and Mii avatar profile synchronization (3DS / Wii U).</b>
+</p>
+
+<p align="center">
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+  <img src="https://img.shields.io/badge/Status-In%20Development-orange?style=flat-square" alt="Status">
+</p>
 
 ## Prerequisites
 
