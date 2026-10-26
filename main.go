@@ -47,9 +47,6 @@ var MinioClient *minio.Client
 
 func InitDB() {
 	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		databaseURL = "postgres://postgres:password@127.0.0.1:5432/miiverse?sslmode=disable"
-	}
 
 	var err error
 	DB, err = pgxpool.New(context.Background(), databaseURL)
@@ -148,17 +145,17 @@ func APIAuthMiddleware() gin.HandlerFunc {
 }
 
 func handleAccountRegistration(c *gin.Context) {
-	nnid := strings.TrimSpace(c.PostForm("nnid"))
+	pnid := strings.TrimSpace(c.PostForm("pnid"))
 	password := c.PostForm("password")
 	countryStr := c.PostForm("country")
 	languageStr := c.PostForm("language")
 
-	if nnid == "" || password == "" {
+	if pnid == "" || password == "" {
 		c.String(http.StatusBadRequest, "Please fill in all fields.")
 		return
 	}
 
-	if len(nnid) < 4 || len(nnid) > 16 {
+	if len(pnid) < 4 || len(pnid) > 16 {
 		c.String(http.StatusBadRequest, "PNID must be between 4 and 16 characters.")
 		return
 	}
@@ -171,7 +168,7 @@ func handleAccountRegistration(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var exists bool
-	err := DB.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM accounts WHERE pnid = $1)", nnid).Scan(&exists)
+	err := DB.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM accounts WHERE pnid = $1)", pnid).Scan(&exists)
 	if err != nil {
 		LogError("Error checking PNID existence: %v", err)
 		c.Status(http.StatusInternalServerError)
@@ -191,15 +188,12 @@ func handleAccountRegistration(c *gin.Context) {
 	}
 
 	miiBaseURL := os.Getenv("MII_API_BASE")
-	if miiBaseURL == "" {
-		miiBaseURL = "https://mii-unsecure.ariankordi.net"
-	}
 	miiBaseURL = strings.TrimSuffix(miiBaseURL, "/")
 
-	miiApiURL := fmt.Sprintf("%s/mii_data/%s?api_id=1", miiBaseURL, nnid)
+	miiApiURL := fmt.Sprintf("%s/mii_data/%s?api_id=1", miiBaseURL, pnid)
 	resp, err := http.Get(miiApiURL)
 	var pid int64 = 0
-	var screenName string = nnid
+	var screenName string = pnid
 
 	if err == nil && resp.StatusCode == http.StatusOK {
 		defer resp.Body.Close()
@@ -217,7 +211,7 @@ func handleAccountRegistration(c *gin.Context) {
 
 	imgID := uuid.New().String()
 	expressions := []string{"normal", "happy", "surprised", "puzzled", "frustrated", "like", "blink", "smile"}
-	baseURL := fmt.Sprintf("%s/miis/image.png?nnid=%s&api_id=1", miiBaseURL, nnid)
+	baseURL := fmt.Sprintf("%s/miis/image.png?nnid=%s&api_id=1", miiBaseURL, pnid)
 
 	cdnBaseURL := os.Getenv("CDN_URL_BASE")
 	cdnBaseURL = strings.TrimSuffix(cdnBaseURL, "/")
@@ -298,15 +292,15 @@ func handleAccountRegistration(c *gin.Context) {
 	if platformName == "3ds" && serviceToken != "" {
 		query = `INSERT INTO accounts (pnid, password_hash, pid, screen_name, mii_url, service_token_3ds, country_id, language_id, region_id, platform_id, utc_offset, tz_name) 
 		         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
-		args = []any{nnid, string(hashedPassword), pid, screenName, miiURL, serviceToken, countryID, languageID, regionID, platformID, utcOffset, tzName}
+		args = []any{pnid, string(hashedPassword), pid, screenName, miiURL, serviceToken, countryID, languageID, regionID, platformID, utcOffset, tzName}
 	} else if serviceToken != "" {
 		query = `INSERT INTO accounts (pnid, password_hash, pid, screen_name, mii_url, service_token_wiiu, country_id, language_id, region_id, platform_id, utc_offset, tz_name) 
 		         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
-		args = []any{nnid, string(hashedPassword), pid, screenName, miiURL, serviceToken, countryID, languageID, regionID, platformID, utcOffset, tzName}
+		args = []any{pnid, string(hashedPassword), pid, screenName, miiURL, serviceToken, countryID, languageID, regionID, platformID, utcOffset, tzName}
 	} else {
 		query = `INSERT INTO accounts (pnid, password_hash, pid, screen_name, mii_url, country_id, language_id, region_id, platform_id, utc_offset, tz_name) 
 		         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
-		args = []any{nnid, string(hashedPassword), pid, screenName, miiURL, countryID, languageID, regionID, platformID, utcOffset, tzName}
+		args = []any{pnid, string(hashedPassword), pid, screenName, miiURL, countryID, languageID, regionID, platformID, utcOffset, tzName}
 	}
 
 	_, err = DB.Exec(ctx, query, args...)
@@ -316,7 +310,7 @@ func handleAccountRegistration(c *gin.Context) {
 		return
 	}
 
-	LogSuccess("API: Account successfully created for PNID: %s (PID: %d)", nnid, pid)
+	LogSuccess("Account successfully created for PNID: %s (PID: %d)", pnid, pid)
 	c.Status(http.StatusOK)
 }
 
