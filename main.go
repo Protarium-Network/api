@@ -220,9 +220,6 @@ func handleAccountRegistration(c *gin.Context) {
 	baseURL := fmt.Sprintf("%s/miis/image.png?nnid=%s&api_id=1", miiBaseURL, nnid)
 
 	cdnBaseURL := os.Getenv("CDN_URL_BASE")
-	if cdnBaseURL == "" {
-		cdnBaseURL = "https://cdn.innoverse.club/olv"
-	}
 	cdnBaseURL = strings.TrimSuffix(cdnBaseURL, "/")
 
 	uploadedURLs := make(map[string]string)
